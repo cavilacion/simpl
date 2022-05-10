@@ -55,14 +55,16 @@
                 [val (hash-set v*** 'u* (rho))] ; uniform sample for cdf inverse transform
                 [poisson `(while (> u* s*) (seq (assign x (+ x 1)) (seq (assign p* (/ (* p* ,lbd) x)) (assign s* (+ s* p*)))))])
          (config poisson val rho))]
-      [(list 'sample x 'stdnormal thunk)
-       (letrec ([v* (hash-set v 'i* 0)]   ; sample index
-                      [v** (hash-set v* 'k* 0)] ; number of successes
-                      [v*** (hash-set v** 'n* 1000)] ; number of trials
-                      [val (hash-set v*** 'p* 0.5)]  ; probability of a single trial
-                      [approx-binom `(seq (while (< i* n*) (seq (sample x bern p*) (seq (assign k* (+ k* x)) (assign i* (+ i* 1)))))
-                                   (assign x (/ (- k* (* p* n*)) (sqrt (* n* (* p* (- 1 p*)))))))])
-         (config approx-binom val rho))]
+      [(list 'sample x 'normal params)
+       (if (pair? params) ; normal(mu,sigma2) requires two arguments
+           (letrec ([v* (hash-set v 'i* 0)]   ; sample index
+                    [v** (hash-set v* 'k* 0)] ; number of successes
+                    [v*** (hash-set v** 'n* 1000)] ; number of trials
+                    [val (hash-set v*** 'p* 0.5)]  ; probability of a single trial
+                    [approx-binom `(seq (while (< i* n*) (seq (sample x bern p*) (seq (assign k* (+ k* x)) (assign i* (+ i* 1)))))
+                                        (assign x (+ ,(car params) (* ,(cadr params) (/ (- k* (* p* n*)) (sqrt (* n* (* p* (- 1 p*)))))))))])
+             (config approx-binom val rho))
+           (displayln "binomial distributions require two parameters `binom(p,n)`"))]
       [(list 'seq 'skip S)
        (config S v rho)]
       [(list 'seq S T)

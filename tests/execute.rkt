@@ -40,9 +40,9 @@
    (test-within "Pr (fail) is low" (exec p) 100 20))
   
   (test-case
-   "Standard normal approximation sampling"
-   (define p "x ~ stdnormal (0); return x")
+   "Normal sampling"
+   (define p "x ~ normal (300,4); return x")
    (let ()
-     (test-within "Pr(fail) approx. 5%" (exec p) 0 2)
-     (test-within "Pr(fail) approx. 5%" (exec p) 0 2))))
+     (test-within "Pr(fail) approx. 5%" (exec p) 300 4)
+     (test-within "Pr(fail) approx. 5%" (exec p) 300 4))))
 

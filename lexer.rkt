@@ -14,7 +14,7 @@
      (token lexeme #:skip? #t)]
     [(:or "skip" "abort" "if" "else" "while" "true" "false" "return" "array")
      (token lexeme lexeme)]
-    [(:or "bern" "binom" "poisson" "stdnormal")
+    [(:or "bern" "binom" "poisson" "normal")
      (token 'DIST lexeme)]
     [(:or "@" ":=" "~" ";" "(" ")" "{" "}" "(" ")" ",")
      (token lexeme lexeme)]
