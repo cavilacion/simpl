@@ -1,2 +1,4 @@
 # simpl
-Toy Probabilistic Programming System written in Beautiful Racket
+This is a toy probabilistic programming system written in beautiful racket
+
+## Installation procedures
