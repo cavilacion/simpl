@@ -1,5 +1,5 @@
 #lang br
-(require SIMPL/lexer brag/support rackunit)
+(require simpl/lexer brag/support rackunit)
 
 (define (lex str)
   (apply-port-proc simpl-lexer str))
