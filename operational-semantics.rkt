@@ -62,7 +62,7 @@
                     [v*** (hash-set v** 'n* 1000)] ; number of trials
                     [val (hash-set v*** 'p* 0.5)]  ; probability of a single trial
                     [approx-binom `(seq (while (< i* n*) (seq (sample x bern p*) (seq (assign k* (+ k* x)) (assign i* (+ i* 1)))))
-                                        (assign x (+ ,(car params) (* ,(cadr params) (/ (- k* (* p* n*)) (sqrt (* n* (* p* (- 1 p*)))))))))])
+                                        (assign ,x (+ ,(car params) (* (sqrt ,(cadr params)) (/ (- k* (* p* n*)) (sqrt (* n* (* p* (- 1 p*)))))))))])
              (config approx-binom val rho))
            (displayln "binomial distributions require two parameters `binom(p,n)`"))]
       [(list 'seq 'skip S)
