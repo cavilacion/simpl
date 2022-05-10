@@ -3,7 +3,7 @@
 (require simpl/parser 
          simpl/tokenizer 
          simpl/expander 
-         simpl/operational-semantics 
+         simpl/operational-semantics
          brag/support 
          rackunit)
 
@@ -37,5 +37,12 @@
   (test-case
    "Poisson sampling"
    (define p "r := 100; x ~ poisson(r); return x")
-   (test-within "Pr (fail) is low" (exec p) 100 20)))
+   (test-within "Pr (fail) is low" (exec p) 100 20))
+  
+  (test-case
+   "Standard normal approximation sampling"
+   (define p "x ~ stdnormal (0); return x")
+   (let ()
+     (test-within "Pr(fail) approx. 5%" (exec p) 0 2)
+     (test-within "Pr(fail) approx. 5%" (exec p) 0 2))))
 

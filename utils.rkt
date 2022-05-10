@@ -3,7 +3,7 @@
 (define add-op? (lambda (x) (memq x '(+ -))))
 (define mul-op? (lambda (x) (memq x '(* /))))
 (define bin-op? (lambda (x) (memq x '(+ - * / || && < <= > >= equal? expt))) )
-(define un-op?  (lambda (x) (memq x '(not -))))
+(define un-op?  (lambda (x) (memq x '(not - sqrt))))
 
 (define (round-off z n)
   (let ((power (expt 10 n)))
