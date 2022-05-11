@@ -16,7 +16,7 @@
      (token lexeme lexeme)]
     [(:or "bern" "binom" "poisson" "normal")
      (token 'DIST lexeme)]
-    [(:or "@" ":=" "~" ";" "(" ")" "{" "}" "(" ")" ",")
+    [(:or "@" ":=" "~" ";" "(" ")" "{" "}" "[" "]" ",")
      (token lexeme lexeme)]
     [(:or "&&" "||" "!")
      (token lexeme lexeme)]

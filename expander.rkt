@@ -15,11 +15,17 @@
 
 (define expand-stmt
   (lambda (stmt)
+    ;(displayln (format "~a\n" stmt))
     (match stmt
-      [(list 'stmt var ":=" expr)
-       `(assign ,var ,(e-fix-assoc (expand-expr expr)))]
-      [(list 'stmt var "~" d expr)
-       `(sample ,var ,(string->symbol d) ,(e-fix-assoc (expand-expr expr)))]
+      [(list 'stmt x ":=" e)
+       `(assign ,x ,(e-fix-assoc (expand-expr e)))]
+      [(list 'stmt x "[" i "]" ":=" e)
+       `(assign-array ,x ,(e-fix-assoc (expand-expr i)) ,(e-fix-assoc (expand-expr e)))]
+      [(list 'stmt x "~" d e)
+       `(sample ,x ,(string->symbol d) ,(e-fix-assoc (expand-expr e)))]
+      [(list 'stmt x "[" i "]" "~" d e)
+       `(sample-array ,x ,(e-fix-assoc (expand-expr i))
+                      ,(string->symbol d) ,(e-fix-assoc (expand-expr e)))]
       [(list 'stmt "if" "(" c ")" "{" body "}")
        `(if ,(expand-expr c) ,(expand-stmts body))]
       [(list 'stmt "if" "(" c ")" "{" bodyT "}" "else" "{" bodyF "}")
@@ -56,6 +62,13 @@
            [else `(,op ,left* ,right*)]))]
       [(list 're e)
        (expand-expr e)]
+      [(list 'e "array" "(" n ")")
+       (letrec ((r (lambda (i) (if (eq? i 0)
+                                   '()
+                                   (cons 0 (r (- i 1)))))))
+         `(array ,n ,(r n)))]
+      [(list 'e "{" ar)
+       (append '(array) (expand-array ar))]
       [(list 'e left "+" right)
        `(+ ,(expand-expr left) ,(expand-expr right))]
       [(list 'e left "-" right)
@@ -76,6 +89,7 @@
       [(list 'e5 "true") #t]
       [(list 'e5 "false") #f]
       [(list 'e5 lit) lit]
+      [(list 'e5 lit "[" i "]") `(acc-arr ,lit ,(expand-expr i))]
       [(list 'e5 "(" e (list 'e6 ")")) `(() ,(expand-expr e))]
       [(list 'e5 "(" e e6)
        (cons (expand-expr e) (expand-expr e6))]
@@ -83,6 +97,20 @@
       [(list 'e6 "," e e6)
        (cons (expand-expr e) (expand-expr e6))]
       [else (error (format "this syntax tree is not an expression: ~a" expr))])))
+
+(define expand-array
+  (lambda (ast)
+    (match ast
+      [(list 'ar "}") '(0 ())]
+      [(list 'ar e ar2)
+       (expand-array2 ar2 (list (e-fix-assoc (expand-expr e))) 1)])))
+(define expand-array2
+  (lambda (ast es n)
+    (match ast
+      [(list 'ar2 "," e ar2)
+       (expand-array2 ar2 (append es (list (e-fix-assoc (expand-expr e)))) (+ n 1))]
+      [(list 'ar2 "}") `(,n ,es)]
+      [else (error (format "not an array expression: ~a" ast))])))
 
 (define e-fix-assoc
   (lambda (ast)

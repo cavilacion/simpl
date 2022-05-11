@@ -1,6 +1,15 @@
 #lang racket
 
-(require simpl/utils)
+
+(require simpl/utils simpl/parser 
+         simpl/tokenizer 
+         simpl/expander 
+         brag/support 
+         rackunit)
+
+(define exec
+  (lambda (x)
+    (execute-simpl (expand-prgrm (parse-to-datum (apply-tokenizer make-tokenizer x))))))
 
 (define ns (make-base-namespace))
 (struct config (stmt val ss) #:transparent)
@@ -28,8 +37,26 @@
   (lambda (ast v rho)
     (match ast
       [(list 'assign x e)
-       (let ([v* (hash-set v x (eval (subst v e) ns))])
+       (letrec ([ev (subst v e)]
+                [rhs (match ev
+                       [(list 'array n values)
+                        (list 'array (eval n ns) (evaluate values))]
+                       [else (eval ev ns)])]
+                [v* (hash-set v x rhs)])
          (config 'skip v* rho))]
+      [(list 'assign-array x i e)
+       (letrec ([x* (hash-ref v x)]
+                [n* (list-ref x* 1)]
+                [a* (list-ref x* 2)]
+                [i* (eval (subst v i) ns)]
+                [ic (or (and (<= 0 i*) (< i* n*)) (error "index out of bound"))]
+                [e* (eval (subst v e) ns)]
+                [a (append (take a* i*) (list e*) (drop a* (+ i* 1)))]
+                [val (hash-set v x (list 'array n* a))])
+         (config 'skip val rho))]
+      [(list 'sample-array x i d e)
+       (letrec ([S `(seq (sample s* ,d ,e) (assign-array ,x ,i s*))])
+         (config S v rho))]
       [(list 'sample x 'bern e)
        (letrec ([v* (hash-set v x (rho))]
                 [bernoulli `(if (< ,x ,(eval (subst v e) ns)) (assign ,x 1) (assign ,x 0))])
@@ -44,57 +71,63 @@
                                  (assign ,x k*))])
              (config binom val rho))
            (displayln "binomial distributions require two parameters `binom(p,n)`"))]
-       [(list 'sample x 'poisson e)
-        (letrec ([lbd (eval (subst v e) ns)]
-                 [p (exp (- lbd))]               ; initial probability value
-                 [v* (hash-set v x 0)]           ; running outcome of the rv sample
-                 [v** (hash-set v* 'p* p)]       ; running probability
-                 [v*** (hash-set v** 's* p)]     ; running sum probability
-                 [val (hash-set v*** 'u* (rho))] ; uniform sample for cdf inverse transform
-                 [poisson `(while (> u* s*) (seq (assign ,x (+ ,x 1)) (seq (assign p* (/ (* p* ,lbd) ,x)) (assign s* (+ s* p*)))))])
-          (config poisson val rho))]
-       [(list 'sample x 'normal params)
-        (if (pair? params) ; normal(mu,sigma2) requires two arguments
-            (letrec ([p (rho)] ; draw uniform(0,1) sample
-                     [n (ceiling (min (* 9 (/ p (- 1 p))) (* 9 (/ (- 1 p) p))))] ; minimum number of bern trials
-                     [v* (hash-set v 'i* 0)]      ; set index for binom sample
-                     [v** (hash-set v* 'k* 0)]    ; set k as a program variable (no. of successes)
-                     [v*** (hash-set v** 'n* n)]    ; set n as a program variable
-                     [val (hash-set v*** 'p* p)]  ; set p as a program variable
-                     [approx-binom `(seq (while (< i* n*) ; while loop: binom sample
-                                                (seq (sample ,x bern p*)
-                                                     (seq (assign k* (+ k* ,x))
-                                                          (assign i* (+ i* 1)))))
-                                         (assign ,x (+ ,(car params) (* (sqrt ,(cadr params)) (/ (- k* (* p* n*)) (sqrt (* n* (* p* (- 1 p*)))))))))])
-              (config approx-binom val rho))
-            (displayln "binomial distributions require two parameters `binom(p,n)`"))]
-       [(list 'seq 'skip S)
-        (config S v rho)]
-       [(list 'seq S T)
-        (letrec ([cnf (execute-stmt S v rho)]
-                 [S*   (config-stmt cnf)]
-                 [v*   (config-val  cnf)]
-                 [rho* (config-ss   cnf)])
-          (config (list 'seq S* T) v* rho*))]
-       [(list 'if e S)
-        (if (eval (subst v e) ns)
-            (config S v rho)
-            (config 'skip v rho))]
-       [(list 'if e S1 S2)
-        (if (eval (subst v e) ns)
-            (config S1 v rho)
-            (config S2 v rho))]
-       [(list 'while e S)
-        (let ([T (list 'if e (list 'seq S (list 'while e S)) 'skip)])
-          (config T v rho))]
-       [(list (list 'return e))
-        (evaluate (subst v e))])))
+      [(list 'sample x 'poisson e)
+       (letrec ([lbd (eval (subst v e) ns)]
+                [p (exp (- lbd))]               ; initial probability value
+                [v* (hash-set v x 0)]           ; running outcome of the rv sample
+                [v** (hash-set v* 'p* p)]       ; running probability
+                [v*** (hash-set v** 's* p)]     ; running sum probability
+                [val (hash-set v*** 'u* (rho))] ; uniform sample for cdf inverse transform
+                [poisson `(while (> u* s*) (seq (assign ,x (+ ,x 1)) (seq (assign p* (/ (* p* ,lbd) ,x)) (assign s* (+ s* p*)))))])
+         (config poisson val rho))]
+      [(list 'sample x 'normal params)
+       (if (pair? params) ; normal(mu,sigma2) requires two arguments
+           (letrec ([p (rho)] ; draw uniform(0,1) sample
+                    [n (ceiling (min (* 9 (/ p (- 1 p))) (* 9 (/ (- 1 p) p))))] ; minimum number of bern trials
+                    [v* (hash-set v 'i* 0)]      ; set index for binom sample
+                    [v** (hash-set v* 'k* 0)]    ; set k as a program variable (no. of successes)
+                    [v*** (hash-set v** 'n* n)]    ; set n as a program variable
+                    [val (hash-set v*** 'p* p)]  ; set p as a program variable
+                    [approx-binom `(seq (while (< i* n*) ; while loop: binom sample
+                                               (seq (sample ,x bern p*)
+                                                    (seq (assign k* (+ k* ,x))
+                                                         (assign i* (+ i* 1)))))
+                                        (assign ,x (+ ,(car params) (* (sqrt ,(cadr params)) (/ (- k* (* p* n*)) (sqrt (* n* (* p* (- 1 p*)))))))))])
+             (config approx-binom val rho))
+           (displayln "binomial distributions require two parameters `binom(p,n)`"))]
+      [(list 'seq 'skip S)
+       (config S v rho)]
+      [(list 'seq S T)
+       (letrec ([cnf (execute-stmt S v rho)]
+                [S*   (config-stmt cnf)]
+                [v*   (config-val  cnf)]
+                [rho* (config-ss   cnf)])
+         (config (list 'seq S* T) v* rho*))]
+      [(list 'if e S)
+       (if (eval (subst v e) ns)
+           (config S v rho)
+           (config 'skip v rho))]
+      [(list 'if e S1 S2)
+       (if (eval (subst v e) ns)
+           (config S1 v rho)
+           (config S2 v rho))]
+      [(list 'while e S)
+       (let ([T (list 'if e (list 'seq S (list 'while e S)) 'skip)])
+         (config T v rho))]
+      [(list (list 'return e))
+       (evaluate (subst v e))])))
 
 (define subst
   (lambda (val e)
+    ;(displayln (format "~a" val))
     (match e
-      [(list 'array n) (letrec ((zeroes (lambda (x) (if (eq? x 0) '() (cons 0 (zeroes (- x 1)))))))
-                         (zeroes n))]
+      [(list 'array n values)
+       (list 'array (evaluate (subst val n)) (evaluate (subst val values)))]
+      [(list 'acc-arr x e)
+       (letrec ((ar (hash-ref val x))
+                (i (eval (subst val e) ns))
+                (ic (or (and (<= 0 i) (< i (list-ref ar 1))) (error "index out of bound"))))
+         (list-ref (list-ref ar 2) i))]
       [(list (? bin-op? op) left right) (list op (subst val left) (subst val right))]
       [(list (? un-op? op)  opnd) (list op (subst val opnd))]
       [(? list? x) (map (lambda (y) (subst val y)) x)]
@@ -106,11 +139,14 @@
 (define evaluate
   (lambda (e)
     (match e
+      [(list 'array n values) (evaluate values)]
       [(list (? bin-op? op) _ _) (eval e ns)]
       [(list (? un-op? op) _) (eval e ns)]
       [(? list? tuple) (map evaluate tuple)]
       [(? number? x) x]
       [(? boolean? x) x]
       [(? string? x) x])))
+
+(define p "x:={3,3,42,4}; y:=x[2]; return y")
 
 (provide execute-simpl config-stmt config-val config-ss)

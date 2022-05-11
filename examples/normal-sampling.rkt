@@ -11,17 +11,23 @@
   (lambda (x)
     (execute-simpl (expand-prgrm (parse-to-datum (apply-tokenizer make-tokenizer x))))))
       (code #<<HERE
-a ~ normal(300,4);
-b ~ normal(300,4);
-c ~ normal(300,4);
-d ~ normal(300,4);
-e ~ normal(300,4);
-f ~ normal(300,4);
-g ~ normal(300,4);
-h ~ normal(300,4);
-i ~ normal(300,4);
-j ~ normal(300,4);
-return (a,b,c,d,e,f,g,h,i,j)
+m := 0;
+n := 2000;
+x := array(2000);
+i := 0;
+while (i < n) {
+  sample ~ normal (0,1);
+  x[i] := sample;
+  m    := m + sample/n;
+  i:=i+1
+};
+var := 0;
+i := 0;
+while (i < n) {
+  var := var + (m - x[i])^2/(n-1);
+  i := i + 1
+};
+return (m,var)
 HERE
 ))
   (exec code))
