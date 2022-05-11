@@ -43,5 +43,10 @@ Run the unit (some are probabilistic and might give errors) tests with
 ```
 $ raco test tests
 ```
-
+There is one example available in the directory `examples`. 
+The example just samples 10 normal(300,4) samples, so values distributed around a normal distribution with mean 300 and variance 4 (standard deviation 2).
+The example can be executed as follows:
+```
+$ racket examples/some-normal-samples.rkt
+```
 
