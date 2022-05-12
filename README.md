@@ -5,7 +5,8 @@ The goal is to provide an off-the-shelf imperative programming language with bui
 ## Installation Procedures
 Install docker on your machine if not running debian/ubuntu.
 
-### In Debian/Ubuntu
+### In Linux
+Only tested on Debian/Bullseye and Arch Linux.
 Make sure you have installed `git`, `racket`, and `sqlite3`.
 Also install `beautiful-racket` by executing the following command:
 ```
