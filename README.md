@@ -3,10 +3,10 @@ This is a toy probabilistic programming system written in beautiful racket.
 The goal is to provide an off-the-shelf imperative programming language with built-in language constructs for statistical computations such as sampling and bayesian inversion.
 
 ## Installation Procedures
-Install docker on your machine if not running debian/ubuntu.
+Install docker on your machine if not running Linux.
+The system has only been tested on Debian (bullseye) and Arch Linux.
 
 ### In Linux
-Only tested on Debian/Bullseye and Arch Linux.
 Make sure you have installed `git`, `racket`, and `sqlite3`.
 Also install `beautiful-racket` by executing the following command:
 ```
