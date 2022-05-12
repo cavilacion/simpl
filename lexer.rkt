@@ -12,7 +12,7 @@
     [(:or (from/stop-before "//" "\n")
           (from/to "/*" "*/"))
      (token lexeme #:skip? #t)]
-    [(:or "skip" "abort" "if" "else" "while" "true" "false" "return" "array")
+    [(:or "skip" "abort" "if" "else" "while" "true" "false" "return" "array" "score")
      (token lexeme lexeme)]
     [(:or "bern" "binom" "poisson" "normal" "exp")
      (token 'DIST lexeme)]

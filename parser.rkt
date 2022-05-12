@@ -8,6 +8,7 @@ stmt : "skip"
      | VARIABLE [ "[" e "]" ] "~" DIST e
      | "if" "(" be ")" "{" stmts "}" [ "else" "{" stmts "}" ]
      | "while" "(" be ")" "{" stmts "}"
+     | "score" "(" e ")"
      | "return" e
 
 be  : be1 [ "||" be ]

@@ -11,7 +11,7 @@
     (execute-simpl (expand-prgrm (parse-to-datum (apply-tokenizer make-tokenizer x))))))
 
 (define ns (make-base-namespace))
-(struct config (stmt val ss) #:transparent)
+(struct config (stmt val ss w) #:transparent)
 
 (define N (void)) ; spare stdnormal sampled value
 
@@ -20,22 +20,23 @@
     (let ((prgrm ast)
           (val (make-immutable-hash))
           (stream random))
-      (execute-stmts prgrm val stream))))
+      (execute-stmts prgrm val stream 1))))
 
 (define execute-stmts
-  (lambda (ast v rho)
+  (lambda (ast v rho w)
     (match ast
       ['skip v]
       [(list 'return e)
-       (evaluate (subst v e))]
+       (list w (evaluate (subst v e)))]
       [else 
-       (let ([step (execute-stmt ast v rho)])
+       (let ([step (execute-stmt ast v rho w)])
          (execute-stmts (config-stmt step) 
                         (config-val step) 
-                        (config-ss step)))])))
+                        (config-ss step)
+                        (config-w step)))])))
 
 (define execute-stmt
-  (lambda (ast v rho)
+  (lambda (ast v rho w)
     (match ast
       [(list 'assign x e)
        (letrec ([ev (subst v e)]
@@ -44,7 +45,7 @@
                         (list 'array (eval n ns) (evaluate values))]
                        [else (eval ev ns)])]
                 [v* (hash-set v x rhs)])
-         (config 'skip v* rho))]
+         (config 'skip v* rho w))]
       [(list 'assign-array x i e)
        (letrec ([x* (hash-ref v x)]
                 [n* (list-ref x* 1)]
@@ -54,14 +55,14 @@
                 [e* (eval (subst v e) ns)]
                 [a (append (take a* i*) (list e*) (drop a* (+ i* 1)))]
                 [val (hash-set v x (list 'array n* a))])
-         (config 'skip val rho))]
+         (config 'skip val rho w))]
       [(list 'sample-array x i d e)
        (letrec ([S `(seq (sample s* ,d ,e) (assign-array ,x ,i s*))])
-         (config S v rho))]
+         (config S v rho w))]
       [(list 'sample x 'bern e)
        (letrec ([v* (hash-set v x (rho))]
                 [bernoulli `(if (< ,x ,(eval (subst v e) ns)) (assign ,x 1) (assign ,x 0))])
-         (config bernoulli v* rho))]
+         (config bernoulli v* rho w))]
       [(list 'sample x 'binom e)
        (if (pair? e) ; binom(p,n) requires two argumentsexec
            (letrec ([v* (hash-set v 'i* 0)]   ; sample index
@@ -70,7 +71,7 @@
                     [val (hash-set v*** 'p* (car e))]  ; probability of a single trial
                     [binom `(seq (while (< i* n*) (seq (sample ,x bern p*) (seq (assign k* (+ k* ,x)) (assign i* (+ i* 1)))))
                                  (assign ,x k*))])
-             (config binom val rho))
+             (config binom val rho w))
            (error "binomial distributions require two parameters `binom(p,n)`"))]
       [(list 'sample x 'poisson e)
        (letrec ([lbd (eval (subst v e) ns)]
@@ -80,7 +81,7 @@
                 [v*** (hash-set v** 's* p)]     ; running sum probability
                 [val (hash-set v*** 'u* (rho))] ; uniform sample for cdf inverse transform
                 [poisson `(while (> u* s*) (seq (assign ,x (+ ,x 1)) (seq (assign p* (/ (* p* ,lbd) ,x)) (assign s* (+ s* p*)))))])
-         (config poisson val rho))]
+         (config poisson val rho w))]
       [(list 'sample x 'normal params)
        (and (or (pair? params) (error "normal distributions require two parameters `normal(mean,var)`"))
             (let ([mu (car params)]    ; population mean (to be sampled)
@@ -92,36 +93,39 @@
                            [Y (* (sqrt (* -2 (log U))) (sin (* 2 (* pi V))))]
                            [normal `(assign ,x (+ ,mu (* ,X (sqrt ,var))))])
                     (set! N Y)
-                    (config normal v rho))
+                    (config normal v rho w))
                   (let ([normal `(assign ,x (+ ,mu (* ,N (sqrt ,var))))])
                     ; we use the old sample and remove it
                     (set! N (void))
-                    (config normal v rho)))))]
+                    (config normal v rho w)))))]
       [(list 'sample x 'exp e)
        (letrec ([lbd (eval (subst v e) ns)]
                 [u (rho)]
                 [X (- (* (/ 1 lbd) (log (- 1 u))))]
                 [exponential `(assign ,x ,X)])
-         (config exponential v rho))]
+         (config exponential v rho w))]
       [(list 'seq 'skip S)
-       (config S v rho)]
+       (config S v rho w)]
       [(list 'seq S T)
-       (letrec ([cnf (execute-stmt S v rho)]
+       (letrec ([cnf (execute-stmt S v rho w)]
                 [S*   (config-stmt cnf)]
                 [v*   (config-val  cnf)]
-                [rho* (config-ss   cnf)])
-         (config (list 'seq S* T) v* rho*))]
+                [rho* (config-ss   cnf)]
+                [w*   (config-w    cnf)])
+         (config (list 'seq S* T) v* rho* w*))]
       [(list 'if e S)
        (if (eval (subst v e) ns)
-           (config S v rho)
-           (config 'skip v rho))]
+           (config S v rho w)
+           (config 'skip v rho w))]
       [(list 'if e S1 S2)
        (if (eval (subst v e) ns)
-           (config S1 v rho)
-           (config S2 v rho))]
+           (config S1 v rho w)
+           (config S2 v rho w))]
       [(list 'while e S)
        (let ([T (list 'if e (list 'seq S (list 'while e S)) 'skip)])
-         (config T v rho))]
+         (config T v rho w))]
+      [(list 'score e)
+       (config 'skip v rho (* w (eval (subst v e) ns)))]
       [(list (list 'return e))
        (evaluate (subst v e))])))
 
@@ -157,4 +161,4 @@
 
 (define p "x:={3,3,42,4}; y:=x[2]; return y")
 
-(provide execute-simpl config-stmt config-val config-ss)
+(provide execute-simpl config-stmt config-val config-ss config-w)

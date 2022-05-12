@@ -13,11 +13,6 @@
 
 (module+ test
   (test-case
-   "Assignment then return"
-   (define p "x := 42; return x")
-   (check-equal? (cadr (exec p)) 42))
-  
-  (test-case
-   "Assignments and operator precedence in terms"
-   (define p "x := 0*2^5; y := 1-16/2^3/2*x+2; z ~ bern(0.01); return y")
-   (check-equal? (cadr (exec p)) 3)))
+   "Simple scoring: 5% failure probability"
+   (define p "x ~ bern(0.05); score(x); return x")
+   (check-equal? (exec p) '(0 0))))
