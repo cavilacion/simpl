@@ -12,11 +12,11 @@
     (execute-simpl (expand-prgrm (parse-to-datum (apply-tokenizer make-tokenizer x))))))
       (code #<<HERE
 m := 0;
-n := 2000;
-x := array(2000);
+n := 1000;
+x := array(1000);
 i := 0;
 while (i < n) {
-  sample ~ normal (0,1);
+  sample ~ normal (100,20);
   x[i] := sample;
   m    := m + sample/n;
   i:=i+1

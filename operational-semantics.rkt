@@ -14,6 +14,8 @@
 (define ns (make-base-namespace))
 (struct config (stmt val ss) #:transparent)
 
+(define N (void)) ; spare stdnormal sampled value
+
 (define execute-simpl
   (lambda (ast)
     (let ((prgrm ast)
@@ -70,7 +72,7 @@
                     [binom `(seq (while (< i* n*) (seq (sample ,x bern p*) (seq (assign k* (+ k* ,x)) (assign i* (+ i* 1)))))
                                  (assign ,x k*))])
              (config binom val rho))
-           (displayln "binomial distributions require two parameters `binom(p,n)`"))]
+           (error "binomial distributions require two parameters `binom(p,n)`"))]
       [(list 'sample x 'poisson e)
        (letrec ([lbd (eval (subst v e) ns)]
                 [p (exp (- lbd))]               ; initial probability value
@@ -81,20 +83,21 @@
                 [poisson `(while (> u* s*) (seq (assign ,x (+ ,x 1)) (seq (assign p* (/ (* p* ,lbd) ,x)) (assign s* (+ s* p*)))))])
          (config poisson val rho))]
       [(list 'sample x 'normal params)
-       (if (pair? params) ; normal(mu,sigma2) requires two arguments
-           (letrec ([p (rho)] ; draw uniform(0,1) sample
-                    [n (ceiling (min (* 9 (/ p (- 1 p))) (* 9 (/ (- 1 p) p))))] ; minimum number of bern trials
-                    [v* (hash-set v 'i* 0)]      ; set index for binom sample
-                    [v** (hash-set v* 'k* 0)]    ; set k as a program variable (no. of successes)
-                    [v*** (hash-set v** 'n* n)]    ; set n as a program variable
-                    [val (hash-set v*** 'p* p)]  ; set p as a program variable
-                    [approx-binom `(seq (while (< i* n*) ; while loop: binom sample
-                                               (seq (sample ,x bern p*)
-                                                    (seq (assign k* (+ k* ,x))
-                                                         (assign i* (+ i* 1)))))
-                                        (assign ,x (+ ,(car params) (* (sqrt ,(cadr params)) (/ (- k* (* p* n*)) (sqrt (* n* (* p* (- 1 p*)))))))))])
-             (config approx-binom val rho))
-           (displayln "binomial distributions require two parameters `binom(p,n)`"))]
+       (and (or (pair? params) (error "normal distributions require two parameters `normal(mean,var)`"))
+            (let ([mu (car params)]    ; population mean (to be sampled)
+                  [var (cadr params)]) ; population variance (to be sampled)
+              (if (void? N) 
+                  (letrec ([U (rho)] ; draw two uniform samples to perform Box-Muller
+                           [V (rho)] 
+                           [X (* (sqrt (* -2 (log U))) (cos (* 2 (* pi V))))]
+                           [Y (* (sqrt (* -2 (log U))) (sin (* 2 (* pi V))))]
+                           [normal `(assign ,x (+ ,mu (* ,X (sqrt ,var))))])
+                    (set! N Y)
+                    (config normal v rho))
+                  (let ([normal `(assign ,x (+ ,mu (* ,N (sqrt ,var))))])
+                    ; we use the old sample and remove it
+                    (set! N (void))
+                    (config normal v rho)))))]
       [(list 'seq 'skip S)
        (config S v rho)]
       [(list 'seq S T)
