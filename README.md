@@ -1,10 +1,12 @@
 # Simple Imperative Minimal Probabilistic Language
-This is a toy probabilistic programming system written in beautiful racket
+This is a toy probabilistic programming system written in beautiful racket.
+The goal is to provide an off-the-shelf imperative programming language with built-in language constructs for statistical computations such as sampling and bayesian inversion.
 
 ## Installation Procedures
-Install docker on your machine if not running debian/ubuntu.
+Install docker on your machine if not running Linux.
+The system has only been tested on Debian (bullseye) and Arch Linux.
 
-### In Debian/Ubuntu
+### In Linux
 Make sure you have installed `git`, `racket`, and `sqlite3`.
 Also install `beautiful-racket` by executing the following command:
 ```
@@ -38,15 +40,27 @@ Use this ID `N` to execute the image as follows (only the first couple of digits
 $ docker run -it N
 ```
 
-## After Installation
-Run the unit (some are probabilistic and might give errors) tests with
+## Testing
+Run the unit tests with the command below.
+NB: some tests fail with a probability of approximately 5%; most test runs should succeed though, so rerunning the tests after a failure likely "fixes" things.
 ```
 $ raco test tests
 ```
-There is one example available in the directory `examples`. 
-The example just samples 10 normal(300,4) samples, so values distributed around a normal distribution with mean 300 and variance 4 (standard deviation 2).
-The example can be executed as follows:
-```
-$ racket examples/some-normal-samples.rkt
-```
 
+## Examples
+There is some examples available in the directory `examples`. 
+
+### Normal sampling
+The file `normal-sampling.rkt`, for example, samples 1000 times from a normal(100,20) distribution and calculates the sample mean and sample variance.  
+```
+$ racket examples/normal-sampling.rkt
+```
+The result should be _approximately_ (100 20).
+
+### Burglary alarm
+The file `burglary.rkt` contains a probabilistic model for a simple Bayesian inference procedure on Bernoulli distributed random variables representing the occurence of a burglary and an alarm going off.
+```
+$ racket examples/burglary.rkt
+```
+Out of 10000 executions, the result will 9999 times be (0.001 0), meaning that outcome 0 under this model has a weight (unnormalized probability) of 0.001.
+Very rarely, the result is (0.95 1), meaning that outcome 1 has a weight (unnormalized probability) of 0.95.
