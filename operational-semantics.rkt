@@ -58,6 +58,15 @@
       [(list 'sample-array x i d e)
        (letrec ([S `(seq (sample s* ,d ,e) (assign-array ,x ,i s*))])
          (config S v rho w))]
+      [(list 'sample x 'uniform e)
+       (if (pair? e) ; uniform(a,b) requires two parameters
+           (letrec ([a (eval (subst v (car e)) ns)]   
+                    [b (eval (subst v (cadr e)) ns)]
+                    [u (or (and (number? a) (number? b) (< a b) (+ a (* (- b a) (rho))))
+                           (error "uniform distributions require two parameters: uniform(a,b)"))]
+                    [val (hash-set v x u)])
+             (config 'skip val rho w))
+           (error "binomial distributions require two parameters `binom(p,n)`"))]
       [(list 'sample x 'bern e)
        (letrec ([v* (hash-set v x (rho))]
                 [bernoulli `(if (< ,x ,(eval (subst v e) ns)) (assign ,x 1) (assign ,x 0))])
