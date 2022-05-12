@@ -62,5 +62,5 @@ The file `burglary.rkt` contains a probabilistic model for a simple Bayesian inf
 ```
 $ racket examples/burglary.rkt
 ```
-Out of 10.000 executions, the result will 9.999 times be (0.001 0), meaning that outcome 0 under this model has a weight (unnormalized probability) of 0.001.
+Out of 10000 executions, the result will 9999 times be (0.001 0), meaning that outcome 0 under this model has a weight (unnormalized probability) of 0.001.
 Very rarely, the result is (0.95 1), meaning that outcome 1 has a weight (unnormalized probability) of 0.95.
