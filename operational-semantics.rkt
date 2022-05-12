@@ -1,6 +1,5 @@
 #lang racket
 
-
 (require simpl/utils simpl/parser 
          simpl/tokenizer 
          simpl/expander 
@@ -98,6 +97,12 @@
                     ; we use the old sample and remove it
                     (set! N (void))
                     (config normal v rho)))))]
+      [(list 'sample x 'exp e)
+       (letrec ([lbd (eval (subst v e) ns)]
+                [u (rho)]
+                [X (- (* (/ 1 lbd) (log (- 1 u))))]
+                [exponential `(assign ,x ,X)])
+         (config exponential v rho))]
       [(list 'seq 'skip S)
        (config S v rho)]
       [(list 'seq S T)
