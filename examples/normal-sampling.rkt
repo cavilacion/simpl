@@ -1,16 +1,4 @@
-#lang racket
-
-(require simpl/parser 
-         simpl/tokenizer 
-         simpl/expander 
-         simpl/operational-semantics
-         brag/support 
-         rackunit)
-
-(let ((exec
-  (lambda (x)
-    (execute-simpl (expand-prgrm (parse-to-datum (apply-tokenizer make-tokenizer x))))))
-      (code #<<HERE
+#lang simpl
 m := 0;
 n := 1000;
 x := array(1000);
@@ -28,6 +16,3 @@ while (i < n) {
   i := i + 1
 };
 return (m,var)
-HERE
-))
-  (exec code))

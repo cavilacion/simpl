@@ -1,14 +1,13 @@
 #lang racket
 
-(require simpl/utils simpl/parser 
+(require simpl/utils
+         simpl/parser
          simpl/tokenizer 
          simpl/expander 
          brag/support 
          rackunit)
 
-(define exec
-  (lambda (x)
-    (execute-simpl (expand-prgrm (parse-to-datum (apply-tokenizer make-tokenizer x))))))
+(provide execute-simpl config-stmt config-val config-ss config-w)
 
 (define ns (make-base-namespace))
 (struct config (stmt val ss w) #:transparent)
@@ -158,7 +157,3 @@
       [(? number? x) x]
       [(? boolean? x) x]
       [(? string? x) x])))
-
-(define p "x:={3,3,42,4}; y:=x[2]; return y")
-
-(provide execute-simpl config-stmt config-val config-ss config-w)

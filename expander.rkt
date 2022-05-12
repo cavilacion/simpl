@@ -1,6 +1,7 @@
 #lang br/quicklang
 
 (require simpl/utils)
+(provide expand-prgrm)
 
 (define expand-prgrm
   (lambda (prgrm)
@@ -143,6 +144,3 @@
       [(? symbol? x) x]
       [(? boolean? x) x]
       [(? string? x) x])))
-
-(provide expand-prgrm)
-
