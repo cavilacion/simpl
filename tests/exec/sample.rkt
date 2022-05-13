@@ -19,7 +19,7 @@
   
   (test-case
    "Binomial: less than 5% failure probability)"
-   (define p "x ~ binom(2/3,300); return x")
+   (define p "x ~ binom(300,2/3); return x")
    (check-within (cadr (exec p)) 200 20))
 
   (test-case
