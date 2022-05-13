@@ -4,9 +4,8 @@ n := 1000;
 x := array(1000);
 i := 0;
 while (i < n) {
-  sample ~ normal (100,20);
-  x[i] := sample;
-  m    := m + sample/n;
+  x[i] ~ normal (100,20);
+  m := m + x[i]/n;
   i:=i+1
 };
 var := 0;

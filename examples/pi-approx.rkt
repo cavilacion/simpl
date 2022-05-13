@@ -1,4 +1,4 @@
-#lang simpl/symbex
+#lang simpl
 i := 0;
 k := 0;
 n := 5000;

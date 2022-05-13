@@ -30,4 +30,9 @@
   (test-case
    "Normal sampling: less than 5% failure probability"
    (define p "x ~ normal (300,4); return x")
-   (check-within (cadr (exec p)) 300 4)))
+   (check-within (cadr (exec p)) 300 4))
+  
+  (test-case
+   "Two normal samples: less than 1% failure probability"
+   (define p "x ~ normal (300,4); y ~ normal (100,2); return y")
+   (check-within (cadr (exec p)) 100 4)))
