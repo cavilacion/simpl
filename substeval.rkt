@@ -2,7 +2,7 @@
 
 (require simpl/utils)
 
-(provide subst evaluate subst-eval update-val retrieve-val)
+(provide subst evaluate subst-eval update-val update-symbolic-val retrieve-val contains-val?)
 
 (define ns (make-base-namespace))
 
@@ -45,7 +45,17 @@
 (define update-val
   (lambda (val x e)
     (hash-set val x e)))
+(define update-symbolic-val
+  (lambda (val x k)
+    (hash-set val x `(X ,k))))
 (define retrieve-val
   (lambda (val x)
     ;(displayln (format "val: ~a\nx: ~a" val x))
+    x))
+(define retrieve-symbolic-val
+  (lambda (val x)
+    ;(displayln (format "val: ~a\nx: ~a" val x))
     (hash-ref val x)))
+(define contains-val?
+  (lambda (val x)
+    (hash-has-key? val x)))
