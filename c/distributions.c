@@ -4,6 +4,9 @@
 
 #include "distributions.h"
 
+double mu;
+double var;
+
 /* This function implements the PMF of a
  * binomial distribution, without use of combinations
  * to prevent integer overflow
@@ -32,3 +35,13 @@ double poissonPMF (unsigned k, double r) {
   return p;
 }
 
+void set_normal_parameters(double m, double s) {
+  mu = m;
+  var = s;
+  return;
+}
+
+double normalPDF (double x) {
+  double t = -0.5*(x-mu)*(x-mu)/var;
+  return exp(t)/sqrt(var*2*PI);
+}
