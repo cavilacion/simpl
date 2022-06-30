@@ -10,6 +10,7 @@ stmt : "skip"
      | "while" "(" be ")" "{" stmts "}"
      | "score" "(" e ")"
      | "return" e
+     | "observe" e "from" DIST e
 
 be  : be1 [ "||" be ]
 be1 : be2 [ "&&" be1 ]

@@ -3,7 +3,11 @@
 (define add-op? (lambda (x) (memq x '(+ -))))
 (define mul-op? (lambda (x) (memq x '(* /))))
 (define bin-op? (lambda (x) (memq x '(+ - * / || && < <= > >= equal? expt))) )
-(define un-op?  (lambda (x) (memq x '(not - sqrt))))
+(define un-op?  (lambda (x) (memq x '(not - sqrt fac))))
+
+(define fac
+  (lambda (x)
+    (apply * (build-list x add1))))
 
 (define (round-off z n)
   (let ((power (expt 10 n)))
@@ -30,5 +34,5 @@
       [(? symbol? x) #t])))
 
 (provide add-op? mul-op? bin-op? un-op? 
-         round-off 
+         round-off fac
          make-symbolic symbolic-variable? symbolic-expr?)

@@ -5,5 +5,5 @@ if (b == 1) {
 } else {
   a := 0.001
 };
-score (a);
+observe 1 from bern(a); // sugar for `score(a)`
 return b

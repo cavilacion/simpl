@@ -36,6 +36,8 @@
        `(while ,(expand-expr c) ,(expand-stmts body))]
       [(list 'stmt "score" "(" e ")")
        `(score ,(expand-expr e))]
+      [(list 'stmt "observe" e1 "from" d e2)
+       `(score ,(score-sugar d (expand-expr e1) (expand-expr e2)))]
       [(list 'stmt "return" e)
        (list 'return (expand-expr e))])))
 
@@ -144,3 +146,27 @@
       [(? symbol? x) x]
       [(? boolean? x) x]
       [(? string? x) x])))
+
+(define score-sugar
+  (lambda (d e1 e2)
+    (match d
+      ("bern"
+       (if (list? e2)
+           (error (format "observe statement with bernoulli should have one parameter: `~a`" e2))
+           `(* (expt ,e2 ,e1) (expt (- 1 ,e2) (- 1 ,e1)))))
+      ("poisson"
+       (if (list? e2)
+           (error (format "observe statement with exponential distribution requires one parameter: `~a`" e2))
+           (let ((e 2.71828182845904523536))
+             `(* (/ (expt ,e2 ,e1) (fac ,e1)) (expt ,e (- ,e2))))))
+      ("normal"
+       (if (not (and (list? e2) (eq? (length e2) 2)))
+           (error (format "observe statement with normal should have two parameters: `~a`" e2))
+           (let ((mu (car e2))
+                 (var (cadr e2))
+                 (sqr (lambda (x) (* x x)))
+                 (e 2.71828182845904523536)
+                 (pi 3.14159265358979323846))
+             `(/ (expt ,e (- (/ (* (- ,e1 ,mu) (- ,e1 ,mu)) (* 2 ,var)))) (sqrt (* (* 2 ,pi) ,var))))))
+      (else
+       (error (format "observe from ~a not implemented" d))))))

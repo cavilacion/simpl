@@ -20,7 +20,9 @@
       [(list (? bin-op? op) left right)
        (list op (subst sub left) (subst sub right))]
       [(list (? un-op? op) opnd)
-       (eval (list op (subst sub opnd)) ns)]
+       (if (eq? op 'fac)
+           (fac (subst sub opnd))
+           (list op (subst sub opnd)))]
       [(? list? x) (map (lambda (y) (subst sub y)) x)]
       [(? number? x) x]
       [(? boolean? x) x]

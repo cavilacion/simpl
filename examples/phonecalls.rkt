@@ -13,7 +13,6 @@ if (x == 1) {
   r:=3          // we expect 3 calls
 };
 
-// we observe 4 from poisson(r) (use density function)
-score (r^4*2.718281828459045^(-r)/24); 
+observe 4 from poisson(r);
 
 return x
