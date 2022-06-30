@@ -1,9 +1,9 @@
-#lang simpl
+#lang simpl/symbex
 /*
  In this model, we are interested in finding the probability
  of it being a week day, given that we get 4 phone calls in
  one hour as a telephone employee. On week days, we expect
- 10 calls a day; on weekends 4.
+ 10 calls a day; on weekends 3.
 */
 
 x ~ bern(5/7);  // is it a week day?

@@ -1,4 +1,4 @@
-#lang simpl
+#lang simpl/symbex
 b ~ bern(0.0001);
 if (b == 1) {
   a := 0.95

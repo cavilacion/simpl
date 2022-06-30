@@ -2,7 +2,8 @@
 (require simpl/tokenizer
          simpl/parser
          simpl/expander
-         simpl/sym-os)
+         simpl/sym-os
+         racket/pretty)
 
 (define (read-syntax path port)
   (define parse-tree (parse path (make-tokenizer port path)))
@@ -13,6 +14,6 @@
 
 (define-macro (parser-only-mb AST)
   #'(#%module-begin
-     (symbex (expand-prgrm 'AST))))
+     (pretty-print (symbex (expand-prgrm 'AST)))))
 
 (provide (rename-out [parser-only-mb #%module-begin]))
